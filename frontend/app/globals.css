@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --color-brand: #e23d5b;
+  --color-brand-dark: #c62f4c;
+}
+
+body {
+  background: #fff;
+  color: #222;
+}
+
+button:not(:disabled),
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Horizontal scroll rows (category bar, mobile gallery) without a visible bar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
