@@ -3,7 +3,7 @@
 A full-stack clone of the Airbnb web app with an original name and logo. Guests browse, search, filter,
 save and book stays. Hosts create and manage listings and see their reservations.
 
-**Live demo:** _add link after deploy_
+**Live demo:** https://roost-two-lyart.vercel.app (API: https://roost-production-5d4c284e.up.railway.app/docs)
 
 ## Tech stack
 
