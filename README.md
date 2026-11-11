@@ -33,8 +33,6 @@ pnpm dev
 
 Open http://localhost:3000. API docs (Swagger): http://localhost:8000/docs.
 
-- `NEXT_PUBLIC_API_URL` — API origin for the frontend (default `http://localhost:8000`).
-- `DATABASE_URL` — SQLAlchemy URL for the backend (default `sqlite:///./roost.db`).
 - Reset the data: delete `backend/roost.db` and restart the backend.
 - Check the booking rules: `cd backend && .venv/bin/python test_bookings.py`.
 
@@ -169,8 +167,8 @@ All routes are under `/api`. Routes marked 🔒 need the `X-User-Id` header; �
 - **Payment is mocked.** The checkout shows a disabled card form; confirming creates the booking.
 - **Messaging** shows a "coming soon" toast.
 - **Map** is a static OpenStreetMap embed with one marker. Listings made in the host form have no coordinates and show no map.
-- **Seed photos** are stock images from picsum.photos, so they do not show real homes.
-- **Uploads** are stored on the API server's disk (`backend/uploads/`). A host with no persistent disk needs object storage.
+- **Seed photos** come from Unsplash (fetched once via its search API, list in `backend/app/seed_photos.json`). The running app needs no API key.
+- **Uploads** are stored on the API server's disk (`UPLOAD_DIR`), on the same volume as the database in production.
 - **Prices** are whole US dollars. Service fee is 14% of the nightly subtotal.
 - **Concurrency:** the availability check and the insert run inside one process-wide lock, so two requests
   for the same dates cannot both succeed (tested with 8 parallel requests). This is correct for one server
@@ -182,7 +180,22 @@ All routes are under `/api`. Routes marked 🔒 need the `X-User-Id` header; �
 
 ## Deploy
 
-- **Backend** (Render / Railway): root `backend`, build `pip install -r requirements.txt`,
-  start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. SQLite lives on the instance disk; without a
-  persistent disk the data is seeded again on each deploy.
-- **Frontend** (Vercel): root `frontend`, env `NEXT_PUBLIC_API_URL=https://<backend-host>`.
+**Backend — Railway** (needs a persistent volume, so bookings and uploads survive restarts):
+
+1. New project → Deploy from GitHub repo → this repo. Root directory: `backend`.
+2. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+3. Add a volume mounted at `/data`.
+4. Variables: `DATABASE_URL=sqlite:////data/roost.db`, `UPLOAD_DIR=/data/uploads`.
+5. Generate a domain and check `https://<domain>/api/health`.
+
+The database is created and seeded on the first start, then kept on the volume.
+
+**Frontend — Vercel:** root directory `frontend`, variable `NEXT_PUBLIC_API_URL=https://<backend-domain>`.
+
+Environment variables:
+
+| Name | Where | Default |
+| --- | --- | --- |
+| `DATABASE_URL` | backend | `sqlite:///./roost.db` |
+| `UPLOAD_DIR` | backend | `uploads` |
+| `NEXT_PUBLIC_API_URL` | frontend | `http://localhost:8000` |

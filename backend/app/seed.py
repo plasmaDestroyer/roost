@@ -1,7 +1,9 @@
 """Demo data. Runs once, when the users table is empty."""
 
+import json
 import random
 from datetime import date, timedelta
+from pathlib import Path
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -88,10 +90,17 @@ REVIEW_COMMENTS = [
 ]
 
 
-def photo_url(listing_number: int, position: int) -> str:
-    # ponytail: keyless stock photos; the seed makes each URL return the same image.
-    # They are not house photos. Swap this one function for real uploads or an image API.
-    return f"https://picsum.photos/seed/roost-{listing_number}-{position}/1200/800"
+# Unsplash photo URLs, fetched once from the Unsplash search API and committed, so the
+# running app needs no API key. Cover = exterior for the category, then four rooms.
+PHOTOS = json.loads((Path(__file__).parent / "seed_photos.json").read_text())
+ROOMS = ["living", "bedroom", "kitchen", "bathroom"]
+
+
+def photo_urls(listing_number: int, category: str) -> list[str]:
+    exteriors = PHOTOS[category]
+    picks = [exteriors[listing_number % len(exteriors)]]
+    picks += [PHOTOS[room][listing_number % len(PHOTOS[room])] for room in ROOMS]
+    return [f"{url}?w=1200&q=80&auto=format&fit=crop" for url in picks]
 
 
 def describe(title: str, city: str, property_type: str) -> str:
@@ -169,7 +178,7 @@ def seed_if_empty(db: Session) -> None:
             bedrooms=bedrooms,
             beds=bedrooms + rng.randint(0, 1),
             baths=max(1, bedrooms - 1),
-            photos=[ListingPhoto(url=photo_url(i, n), position=n) for n in range(5)],
+            photos=[ListingPhoto(url=url, position=n) for n, url in enumerate(photo_urls(i, category))],
             amenities=rng.sample(amenities, rng.randint(6, 11)),
         )
         listings.append(listing)

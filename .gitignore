@@ -9,3 +9,5 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 .env*.local
+# local tooling
+.claude/

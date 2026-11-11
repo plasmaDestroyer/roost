@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import date
 from pathlib import Path
@@ -14,7 +15,7 @@ from ..schemas import AmenityOut, DateRange, ListingCard, ListingDetail, Listing
 
 router = APIRouter(tags=["listings"])
 
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "uploads"))  # point at a persistent volume in production
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 
@@ -178,7 +179,7 @@ async def upload_photo(file: UploadFile, _: User = Depends(require_host)):
     if suffix not in {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"}:
         suffix = ".jpg"
     name = f"{uuid.uuid4().hex}{suffix}"
-    UPLOAD_DIR.mkdir(exist_ok=True)
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     (UPLOAD_DIR / name).write_bytes(content)
     # ponytail: local disk. On a host with no persistent disk, swap for S3/Cloudinary here.
     return {"url": f"/uploads/{name}"}
